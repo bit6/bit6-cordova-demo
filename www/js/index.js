@@ -16,7 +16,7 @@ var app = {
              StatusBar.overlaysWebView(false);
              StatusBar.styleDefault();
         }
-        var opts = {'apikey': '3y9-26ufj', 'env': 'dev'};
+        var opts = {'apikey': ''};
         var b6 = Bit6.init(opts);
         initApp(b6);
     }
