@@ -40,7 +40,7 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
   $ cordova plugin add https://github.com/apache/cordova-plugin-statusbar
   ```
 
-### Run the app
+### Running the app
 ```sh
 # Run on iOS device
 cordova run ios --device
