@@ -14,28 +14,28 @@ This project demonstrates the full functionality of [Bit6 Cordova Plugin](https:
   {'apikey': 'yourApiKey'}
   ```
 
-* Add Bit6 plugin
+* Add Bit6 Plugin
   ```bash
   cordova plugin add https://github.com/bit6/bit6-cordova
   # Or if you have the plugin installed locally
   # cordova plugin add<path/to/bit6plugin>
   ```
 * Add the platforms you want to support (ios/android/browser)
-  ```
+  ```bash
   cordova platform add ios
   cordova platform add android
   cordova platform add browser
   ```
 
-* Optional plugin:
+* Optional plugin
 
-  To avoid cordova webview and iOS status bar overlapping you can add [statusbar plugin](https://github.com/apache/cordova-plugin-statusbar).
-  ```
+  To avoid iOS status bar overlapping the Cordova WebView you can add [StatusBar Plugin](https://github.com/apache/cordova-plugin-statusbar).
+  ```bash
   cordova plugin add https://github.com/apache/cordova-plugin-statusbar
   ```
 
 * Run the demo app
-  ```
+  ```bash
   # Run on iOS device
   cordova run ios --device
   # Run on Android device
