@@ -1,32 +1,38 @@
-Bit6 Cordova Plugin
--------------------
+Bit6 Cordova Demo App
+---------------------
 [![GitHub version](https://badge.fury.io/gh/bit6%2Fbit6-cordova.svg)](https://github.com/bit6/bit6-cordova-demo)
 
-This cordova demo project demonstrates the full functionality of [Bit6 plugin](https://github.com/bit6/bit6-cordova).
+This project demonstrates the full functionality of [Bit6 Cordova Plugin](https://github.com/bit6/bit6-cordova).
 
 ### Usage
-* Open config.xml and set your package id - replace id="com.bit6.samples.DemoApp" with your id
-  (note: APN certificate requires unique bundle id).
-* Get Bit6 API Key by going to [Dashboard](https://dashboard.bit6.com) (if not done yet).
+* Get the API Key at [Bit6 Dashboard](https://dashboard.bit6.com).
 * Clone this repo.
-* Set you API key in www/js/index.js
-   ```
-   {'apikey': 'yourApiKey'}
-   ```
+* Edit `config.xml` to set your app id - replace `com.bit6.samples.DemoApp` with your app id
+  (note: iOS APN requires unique bundle id).
+* Set your Bit6 API Key in `www/js/index.js`
+  ```js
+  {'apikey': 'yourApiKey'}
+  ```
 
-* Add plugin
+* Add Bit6 plugin
+  ```bash
+  cordova plugin add https://github.com/bit6/bit6-cordova
+  # Or if you have the plugin installed locally
+  # cordova plugin add<path/to/bit6plugin>
   ```
-    cd demo
-    cordova plugin add https://github.com/bit6/bit6-cordova
-      or if you have the plugin locally
-    cordova plugin add  <path/to/bit6plugin>
+* Add the platforms you want to support (ios/android/browser)  
   ```
-* Add needed platforms (ios/android/browser)
-```
-   cordova platform add <ios | andoroid | browser>
-```
+  cordova platform add ios
+  cordova platform add android
+  cordova platform add browser
+  ```
 
 * Run the demo app
-```
+  ```
+  # Run on iOS device
   cordova run ios --device
-```
+  # Run on Android device
+  cordova run android --device
+  # Run in a browser
+  cordova run browser
+  ```
