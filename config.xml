@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.bit6.samples.DemoApp" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Bit6 Demo</name>
+    <description>
+        Fully functional communications app - messaging, voice and video calling between users.
+    </description>
+    <author email="dev@bit6.com" href="http://bit6.com">
+        Bit6 Team
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+</widget>
