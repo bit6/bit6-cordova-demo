@@ -49,3 +49,7 @@ $ cordova run android --device
 # Run in a browser
 $ cordova run browser
 ```
+
+### Push notifications
+
+Push Notification support is required for receiving incoming calls and messages. See [Bit6 Plugin](https://github.com/bit6/bit6-cordova) for configuration information.
