@@ -34,7 +34,9 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
   $ cordova platform add browser
   ```
 
-5. Fix WebView overlap on iOS (optional)
+5. [Configure](https://github.com/bit6/bit6-cordova#push-notifications) push notification support.
+
+6. Fix WebView overlap on iOS (optional)
   ```sh
   # Add StatusBar plugin
   $ cordova plugin add https://github.com/apache/cordova-plugin-statusbar
@@ -49,7 +51,3 @@ $ cordova run android --device
 # Run in a browser
 $ cordova run browser
 ```
-
-### Push notifications
-
-Push Notification support is required for receiving incoming calls and messages. See [Bit6 Plugin](https://github.com/bit6/bit6-cordova) for configuration information.
