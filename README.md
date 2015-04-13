@@ -43,9 +43,9 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
 ### Running the app
 ```sh
 # Run on iOS device
-cordova run ios --device
+$ cordova run ios --device
 # Run on Android device
-cordova run android --device
+$ cordova run android --device
 # Run in a browser
-cordova run browser
+$ cordova run browser
 ```
