@@ -22,13 +22,11 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
   ```
 
 3. Add Bit6 Plugin
-  ```bash
+  ```sh
   $ cordova plugin add https://github.com/bit6/bit6-cordova
-  # Or if you have the plugin installed locally
-  # cordova plugin add path/to/bit6-cordova
   ```
 4. Add the platforms you want to support
-  ```bash
+  ```sh
   $ cordova platform add ios
   $ cordova platform add android
   $ cordova platform add browser
