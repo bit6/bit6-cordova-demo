@@ -25,6 +25,7 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
   ```sh
   $ cordova plugin add https://github.com/bit6/bit6-cordova
   ```
+
 4. Add the platforms you want to support
   ```sh
   $ cordova platform add ios
