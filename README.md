@@ -14,9 +14,9 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
 ```
 
 ### Configuration
-1. Edit `config.xml` to set your app id (iOS APNs requires unique bundle id).
+1. Edit [config.xml](config.xml#L3) to set your app id (iOS APNs requires unique bundle id).
 
-2. Specify your Bit6 API Key in `www/js/index.js`
+2. Specify your Bit6 API Key in [www/js/index.js](www/js/index.js#L19)
   ```js
   {'apikey': 'yourApiKey'}
   ```
