@@ -1,8 +1,6 @@
 Bit6 Cordova Demo App
 ---------------------
-[![GitHub version](https://badge.fury.io/gh/bit6%2Fbit6-cordova.svg)](https://github.com/bit6/bit6-cordova-demo)
-
-This project demonstrates the full functionality of [Bit6 Cordova Plugin](https://github.com/bit6/bit6-cordova).
+Demo for [Bit6 Cordova Plugin](https://github.com/bit6/bit6-cordova). Users can make voice/video calls and send messages.
 
 ### Prerequisites
 * Get the API Key at [Bit6 Dashboard](https://dashboard.bit6.com).
