@@ -3,12 +3,17 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <meta name="description" content="Bit6 Web Demo">
     <meta name="author" content="Bit6">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
 
-    <title>Bit6 Demo 0.9.1</title>
+    <script>
+      window.onerror = function(err, file, linenr) {
+        alert("Script error caught: " + err + ", " + file + ", " + linenr);
+      }
+    </script>
+
+    <title>Bit6 Demo 0.9.5</title>
 
     <!-- Bootstrap core CSS -->
     <link href="bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -158,6 +163,12 @@
                 </div>
                 <div class="col-sm-8">
                   <div class="input-group">
+                    <span class="input-group-btn">
+                      <span class="btn btn-default btn-file">
+                        <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
+                        <input type="file" id="attachFile" />
+                      </span>
+                    </span>
                     <input type="text" class="form-control" id="msgText" placeholder="Type message">
                     <span class="input-group-btn">
                       <button class="btn btn-primary" type="button" id="sendMsgButton">
