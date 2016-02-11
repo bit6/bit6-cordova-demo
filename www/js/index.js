@@ -16,8 +16,10 @@ var app = {
              StatusBar.overlaysWebView(false);
              StatusBar.styleDefault();
         }
-        var opts = {'apikey': ''};
+        // Init Bit6 SDK
+        var opts = {'apikey': ''}; // TODO: insert your API key here
         var b6 = Bit6.init(opts);
+        // Prepare the app
         initApp(b6);
     }
 };

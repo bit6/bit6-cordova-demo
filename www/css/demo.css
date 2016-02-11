@@ -36,9 +36,23 @@ html, body, .fh {
   display: block;
 }
 
-.chats {
-/*    max-height: 520px;
-    overflow-y: auto; */
+#chatListRow, #msgListRow {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  top: 75px;
+  margin: 0px;
+}
+
+#msgListRow {
+  bottom: 55px;
+}
+
+#chatList, #msgList {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .chats > div {
@@ -109,16 +123,10 @@ html, body, .fh {
 #chatButtons > button {
   margin-right: 4px;
 }
-#newChatMenu {
+
+#newChatDropdown .dropdown-menu {
   padding: 15px;
-}
-
-#newChatUsername {
-  margin-bottom: 10px;
-}
-
-#newChatStart {
-  width: 100%;
+  width: 250px;
 }
 
 #backToList {
@@ -142,21 +150,6 @@ html, body, .fh {
   left: 0px;
   right: 0px;
   bottom: 0px;
-}
-
-#msgListRow {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    bottom: 55px;
-    top: 80px;
-    margin: 0px;
-}
-
-#msgList {
-  position: relative;
-  height: 100%;
-  overflow-y: auto;
 }
 
 .msgs > div {

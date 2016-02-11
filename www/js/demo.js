@@ -5,15 +5,19 @@ function initApp(b6) {
 
     // Disable all audio in this demo
     var disableAudio = false;
-
+    // Current Chat
     var currentChatUri = null;
+    // Timer to clear the 'user typing label'. Should be in SDK?
     var typingLabelTimer = 0;
+    // Current Group
+    var currentGroupId = null;
 
     // Incoming call from another user
     b6.on('incomingCall', function(c) {
         console.log('Incoming call', c);
         attachCallEvents(c);
-        $('#incomingCallFrom').text(b6.getNameFromIdentity(c.other) + ' is calling...');
+        var s = b6.getNameFromIdentity(c.other) + ' is ' + (c.options.video ? 'video ' : '') + 'calling...';
+        $('#incomingCallFrom').text(s);
         $('#incomingCall')
             .data({'dialog': c})
             .show();
@@ -34,19 +38,49 @@ function initApp(b6) {
     // A group has changed
     b6.on('group', function(g, op) {
         console.log('onGrp', op, g);
+        // Is this the currently selected group?
+        if (currentGroupId === g.id) {
+            // Update GroupInfo modal UI
+            populateGroupInfoModal(g);
+        }
     });
 
     // Got a real-time notification
     b6.on('notification', function(m) {
         console.log('demo got rt notification', m);
-        if (m.type == 'typing') {
-            isSentToGroup = m.to.indexOf('grp:') == 0
-            key = isSentToGroup ? m.to : m.from
-            if (key == currentChatUri) {
+        if (m.type === 'typing') {
+            var isSentToGroup = m.to.indexOf('grp:') === 0;
+            var key = isSentToGroup ? m.to : m.from;
+            if (key === currentChatUri) {
                 showUserTyping(m.from);
             }
         }
     });
+
+    // Changes in video elements
+    // v - video element to add or remove
+    // c - Dialog - call controller. null for a local video feed
+    // op - operation. 1 - add, 0 - update, -1 - remove
+    b6.on('video', function(v, c, op) {
+        var vc = $('#videoContainer');
+        if (op < 0) {
+            vc[0].removeChild(v);
+        }
+        else if (op > 0) {
+            v.setAttribute('class', c ? 'remote' : 'local');
+            vc.append(v);
+        }
+        // Total number of video elements (local and remote)
+        var n = vc[0].children.length;
+        if (op !== 0) {
+            vc.toggle(n > 0);
+        }
+        console.log('VIDEO elems.count: ' + n);
+        // Use number of video elems to determine the layout using CSS
+        var kl = n > 2 ? 'grid' : 'simple';
+        vc.attr('class', kl);
+    });
+
 
     // Common click handler for signup and login buttons
     function authClicked(isNewUser) {
@@ -59,7 +93,7 @@ function initApp(b6) {
         b6.session[fn]({'identity': ident, 'password': pass}, function(err) {
             if (err) {
                 console.log('auth error', err);
-                var msg = isNewUser ? 'New user' : 'Login'
+                var msg = isNewUser ? 'New user' : 'Login';
                 msg += ': ' + err.message;
                 $('#authError').html('<p>' + msg + '</p>');
             }
@@ -71,7 +105,7 @@ function initApp(b6) {
             }
         });
         return false;
-    };
+    }
 
     // User has completed the login procedure
     function loginDone() {
@@ -96,10 +130,9 @@ function initApp(b6) {
         else {
             // Clear message lists etc
             console.log('No more chats to select');
-            showMessages(null);
+            showChat(null);
         }
     }
-
 
     // Update Conversation View
     function onConversationChange(c, op) {
@@ -114,12 +147,17 @@ function initApp(b6) {
             if (!c.deleted) {
                 console.log('Warning: Deleting a conversation with no deleted property!', c);
             }
-            if (tabDiv.length == 0 || msgsDiv.length == 0) {
+            if (tabDiv.length === 0 || msgsDiv.length === 0) {
                 console.log('Warning: Deleting a conversation with no DOM element!', c);
             }
             tabDiv.remove();
             msgsDiv.remove();
-            return
+            // Current conversation was deleted
+            if (c.id === currentChatUri) {
+                // Select the first chat
+                selectFirstChat();
+            }
+            return;
         }
 
         // New conversation
@@ -153,8 +191,9 @@ function initApp(b6) {
         var lastMsg = c.getLastMessage();
         if (lastMsg) {
             // Show the text from the latest conversation
-            if (lastMsg.content)
+            if (lastMsg.content) {
                 latestText = lastMsg.content;
+            }
             // If no text, but has an attachment, show the mime type
             else if (lastMsg.data && lastMsg.data.type) {
                 latestText = lastMsg.data.type;
@@ -177,9 +216,14 @@ function initApp(b6) {
             var topTabId = top.attr('id');
             var topConvId = domIdToConversationId(topTabId);
             var topConv = b6.getConversation(topConvId);
-            if (topConv && topConv.id != c.id && c.updated > topConv.updated) {
+            if (topConv && topConv.id !== c.id && c.updated > topConv.updated) {
                 top.before(tabDiv);
             }
+        }
+        // Is this the current conversation?
+        if (c.id === currentChatUri) {
+            // Update chat title
+            showChatTitle();
         }
     }
 
@@ -194,7 +238,7 @@ function initApp(b6) {
             if (!m.deleted) {
                 console.log('Warning: Deleting a message with no deleted property!', m);
             }
-            if (div.length == 0) {
+            if (div.length === 0) {
                 console.log('Warning: Deleting a message with no DOM element!', m);
             }
             div.remove();
@@ -251,14 +295,16 @@ function initApp(b6) {
                     r.push('Video');
                 }
                 if (ch & bit6.Message.DATA) {
-                    r.push('Data');
+                    if (r.length === 0) {
+                        r.push('Data');
+                    }
                 }
-                text = r.join(' + ') + ' Call'
+                text = r.join(' + ') + ' Call';
                 if (m.data && m.data.duration) {
                     var dur = m.data.duration;
                     var mins = Math.floor(dur / 60);
                     var secs = dur % 60;
-                    text += ' - ' + (mins ? mins + 'm ' : '') + secs + 's';
+                    text += ' - ' + (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
                 }
             }
 
@@ -327,7 +373,7 @@ function initApp(b6) {
         // Is this an outgoing message?
         if (!m.incoming()) {
             // Is the message being sent?
-            if (m.status() == bit6.Message.SENDING) {
+            if (m.status() === bit6.Message.SENDING) {
                 // Do we have upload progress info?
                 if (m.progress && m.total) {
                     var s = '' + m.progress;
@@ -345,7 +391,7 @@ function initApp(b6) {
                 // Was it delievered to any destinations?
                 for(var i=0; i < m.others.length; i++) {
                     var o = m.others[i];
-                    if (o.status == bit6.Message.DELIVERED || o.status == bit6.Message.READ) {
+                    if (o.status === bit6.Message.DELIVERED || o.status === bit6.Message.READ) {
                         d.push(b6.getNameFromIdentity(o.uri) + ' ' + o.status);
                     }
                 }
@@ -367,8 +413,8 @@ function initApp(b6) {
         return s;
     }
 
-    function showMessages(uri) {
-        console.log('Show messages for ' + uri);
+    function showChat(uri) {
+        console.log('Show messages for', uri);
 
         //if (uri.indexOf('grp:') == 0) {
         //    b6.api('/groups/'+uri.substring(4), function(err, g) {
@@ -377,16 +423,18 @@ function initApp(b6) {
         //}
 
         // Hide 'user typing' if switching to a different chat
-        if (uri != currentChatUri) {
+        if (uri !== currentChatUri) {
             showUserTyping(false);
         }
 
         // Current conversation identity
         currentChatUri = uri;
 
+        // Show current Chat title - participants
+        showChatTitle();
+
         // Nothing to show
         if (!uri) {
-            $('#msgOtherName').text('');
             $('#chatButtons').toggle(false);
             $('body').removeClass('detail');
             return;
@@ -402,9 +450,8 @@ function initApp(b6) {
             console.log('Messages marked as read');
         }
 
-        $('#msgOtherName').text( b6.getNameFromIdentity(conv.id) );
         $('#chatButtons').toggle(true);
-
+        $('#groupInfoButton').toggle(conv.isGroup());
 
         var msgsDiv = $( msgsDomIdForConversation(conv) );
         // Show only message container for this conversation
@@ -415,6 +462,16 @@ function initApp(b6) {
 
         // Request focus for the compose message text field
         //$('#msgText').focus();
+    }
+
+    function showChatTitle() {
+        var uri = currentChatUri;
+        var t = '';
+        if (uri) {
+            var conv = b6.getConversation(uri);
+            t = b6.getNameFromIdentity(conv.id);
+        }
+        $('#chatTitle').text(t);
     }
 
     // Get jQuery selector for a Message
@@ -435,14 +492,14 @@ function initApp(b6) {
     // Convert element id to a Conversation id
     function domIdToConversationId(id) {
         var r = id.split('__');
-        id = r.length > 0 ? r[1] : id
+        id = r.length > 0 ? r[1] : id;
         return bit6.Conversation.fromDomId(id);
     }
 
     // Convert element id to a Message id
     function domIdToMessageId(id) {
         var r = id.split('__');
-        id = r.length > 0 ? r[1] : id
+        id = r.length > 0 ? r[1] : id;
         return bit6.Message.fromDomId(id);
     }
 
@@ -456,7 +513,9 @@ function initApp(b6) {
     function sendMessage() {
         var text = $('#msgText').val();
         var dest = currentChatUri;
-        if (!text || !dest) return;
+        if (!text || !dest) {
+            return;
+        }
         $('#msgText').val('');
         console.log ('Send message to=', dest, 'content=', text);
         b6.compose(dest)
@@ -470,7 +529,7 @@ function initApp(b6) {
     function handleAttachFiles(files) {
         // files is a FileList of File objects. List some properties.
         for (var i = 0, f; f = files[i]; i++) {
-            console.log(escape(f.name) + ' - selected - type: ' + (f.type || 'n/a') + ' size: ' + f.size + 'b');
+            console.log(f.name + ' - selected - type: ' + (f.type || 'n/a') + ' size: ' + f.size + 'b');
             handleAttachFile(f);
         }
     }
@@ -478,7 +537,9 @@ function initApp(b6) {
     // Send each attached file as a separate message
     function handleAttachFile(f) {
         var dest = currentChatUri;
-        if (!f || !dest) return;
+        if (!f || !dest) {
+            return;
+        }
         console.log ('Send attachment to=', dest, 'file=', f);
         b6.compose(dest)
             .attach(f)
@@ -507,18 +568,24 @@ function initApp(b6) {
     }
 
     // Start an outgoing call
-    function startOutgoingCall(to, video) {
+    function startOutgoingCall(to, video, screen) {
         // Outgoing call params
         var opts = {
             audio: !disableAudio,
-            video: video
+            video: video,
+            screen: screen
         };
         // Start the outgoing call
         var c = b6.startCall(to, opts);
-        if (c) {
-            attachCallEvents(c);
-            showInCallUI(c);
-        }
+        attachCallEvents(c);
+        updateInCallUI(c);
+    }
+
+    // Start an outgoing phone call
+    function startPhoneCall(to) {
+        var c = b6.startPhoneCall(to);
+        attachCallEvents(c);
+        updateInCallUI(c);
     }
 
     // Attach call state events to a RtcDialog
@@ -527,13 +594,6 @@ function initApp(b6) {
         c.on('progress', function() {
             showInCallName();
             console.log('CALL progress', c);
-        });
-        // Number of video feeds/elements changed
-        c.on('videos', function() {
-            var container = $('#videoContainer');
-            var elems = container.children();
-            console.log('VIDEO elems: ', elems.length, elems);
-            container.attr('class', elems.length > 2 ? 'grid' : 'simple');
         });
         // Call answered
         c.on('answer', function() {
@@ -547,13 +607,8 @@ function initApp(b6) {
         c.on('end', function() {
             showInCallName();
             console.log('CALL ended', c);
-            // Remove the remote media elem
-            var e = c.options.remoteMediaEl;
-            if (e && e.parentNode) {
-                e.parentNode.removeChild(e);
-            }
             // No more dialogs?
-            if (b6.dialogs.length == 0) {
+            if (b6.dialogs.length === 0) {
                 // Hide InCall UI
                 $('#detailPane').removeClass('hidden');
                 $('#inCallPane').addClass('hidden');
@@ -566,7 +621,7 @@ function initApp(b6) {
         });
     }
 
-    function showInCallUI(c) {
+    function updateInCallUI(c, opts) {
         showInCallName();
 
         $('body').addClass('detail');
@@ -574,38 +629,10 @@ function initApp(b6) {
         $('#detailPane').addClass('hidden');
         $('#inCallPane').removeClass('hidden');
 
-        // Do not show video feeds area for audio-only call
-        var div = $('#videoContainer').toggle(c.options.video);
+        $('#incallVideo').toggleClass('active', c.options.video);
+        $('#incallScreen').toggleClass('active', c.options.screen);
 
-        // When starting a media connection, we need
-        // to provide either:
-        // 1) for audio call:
-        //    a) <audio> element as remoteMediaEl, or
-        //    b) nothing - let SDK handle it
-        // 2) for video call:
-        //    a) <video> elements as remoteMediaEl and localMediaEl, or
-        //    b) containerEl that will be populated by <video> elements
-        //       by the SDK. <video class="local"> / <video class="remote">
-        var opts = {};
-        // Video call
-        if (c.options.video) {
-            // Can set specific elements here
-            //var rv = $('<video autoplay class="remote" />');
-            //div.prepend(rv);
-            //opts.remoteMediaEl = rv[0];
-            //opts.localMediaEl = $('#localVideo')[0];
-            // Container is required if not setting specific video elements
-            opts.containerEl = div[0];
-        }
-        // Audio call
-        else {
-            // Can specify here, or let SDK handle it
-            //var rv = $('<audio autoplay class="remote" />');
-            //div.prepend(rv);
-            //opts.remoteMediaEl = rv[0];
-        }
-
-        // Start the call connection
+        // Start/update the call
         c.connect(opts);
     }
 
@@ -614,16 +641,46 @@ function initApp(b6) {
         var s = '';
         for(var i in b6.dialogs) {
             var d = b6.dialogs[i];
-            if (i == 0) {
-                //s = d.options.video ? 'Video Call: ' : 'Voice Call: ';
-            }
-            else {
+            if (i > 0) {
                 s += ', ';
             }
             s += b6.getNameFromIdentity(d.other);
         }
         $('#inCallOther').text(s);
     }
+
+    // Show Group Info modal
+    function showGroupInfo(g) {
+        currentGroupId = g.id;
+        // Populate the UI
+        populateGroupInfoModal(g);
+        // Show modal
+        $('#groupInfoModal').modal('show');
+    }
+
+    function populateGroupInfoModal(g) {
+        $('#groupInfoId').text(g.id);
+        $('#groupInfoMe').text(JSON.stringify(g.me));
+        $('#groupInfoMetaRaw').text(JSON.stringify(g.meta, null, 2));
+        $('#groupInfoPermsRaw').text(JSON.stringify(g.permissions, null, 2));
+        $('#groupInfoMembersRaw').text(JSON.stringify(g.members, null, 2));
+        var tbody = $('#groupInfoMembers').empty();
+        for(var i in g.members) {
+            var m = g.members[i];
+            console.log('Member', m);
+            var tr = $('<tr/>');
+            tr.append('<td>' + m.id + '</td>');
+            tr.append('<td>' + m.role + '</td>');
+            tr.append('<td>' + (m.status ? m.status : '') + '</td>');
+            // Leaving myself or kicking somebody else?
+            var removeMemberLabel = m.id === g.me.identity ? 'leave' : 'kick';
+            if (m.role !== 'left') {
+                tr.append('<td><a href="#">' + removeMemberLabel + '</a></td>');
+            }
+            tbody.append(tr);
+        }
+    }
+
 
     console.log('Bit6 Demo Ready!');
 
@@ -661,7 +718,7 @@ function initApp(b6) {
         // No ongoing calls
         else {
             // Select the chat
-            showMessages(convId);
+            showChat(convId);
         }
     });
 
@@ -670,6 +727,12 @@ function initApp(b6) {
     $('#backToList').click(function() {
         $('body').removeClass('detail');
     });
+
+    // When GroupInfo modal is closed, clear currentGroupId
+    $('#groupInfoModal').on('hidden.bs.modal', function () {
+        currentGroupId = null;
+    });
+
 
     // Click on a message deletes it
     //$('#msgList').on('click', '.msg', function(e) {
@@ -685,7 +748,7 @@ function initApp(b6) {
     $('#newChatDropdown').on('shown.bs.dropdown', function () {
         $('#newChatUsername').val('');
         setTimeout(function() {$('#newChatUsername').focus();}, 100);
-    })
+    });
 
     // Start a new chat
     $('#newChatStart').click(function() {
@@ -698,11 +761,47 @@ function initApp(b6) {
         if (v) {
             var uri = 'usr:' + v;
             b6.addEmptyConversation(uri);
-            showMessages(uri);
+            showChat(uri);
         }
         return false;
     });
 
+    // Create a new Group
+    $('#newGroupCreate').click(function() {
+        var t = $('#newGroupTitle').val().trim();
+        console.log('Create a group with title: ' + t);
+        // Closes the dropdown but then you cannot open it again
+        //$('#newChatDropdown').dropdown('toggle');
+        // Slightly hackier way to close the dropdown
+        $('body').trigger('click');
+        var opts = {};
+        if (t) {
+            opts.meta = {title: t};
+        }
+        b6.createGroup(opts, function(err, g) {
+            console.log('Group created', g, err);
+        });
+        //showChat(uri);
+        return false;
+    });
+
+    // Add a new group member
+    $('#newMemberButton').click(function() {
+        var v = $('#newMemberUsername').val().trim();
+        var g = b6.getGroup(currentGroupId);
+        if (v && g) {
+            $('#newMemberUsername').val('');
+            // No URI scheme
+            if (v.indexOf(':') < 0) {
+                // Assume a username
+                v = 'usr:' + v;
+            }
+            b6.inviteGroupMember(g, v, 'user', function(err) {
+                console.log('Member added to group err=', err);
+            });
+        }
+        return false;
+    });
 
     // Send Message click
     $('#sendMsgButton').click(function() {
@@ -728,27 +827,59 @@ function initApp(b6) {
         console.log('Delete current conversation');
         b6.deleteConversation(currentChatUri, function(err) {
             console.log('Conversation deleted');
-            selectFirstChat();
         });
+        return false;
+    });
+
+    // Show Group info
+    $('#groupInfoButton').click(function() {
+        var g = b6.getGroup(currentChatUri);
+        console.log('Show group info for ' + currentChatUri, g);
+        if (g) {
+            showGroupInfo(g);
+        }
+        return false;
+    });
+
+    // Member action in GroupInfo Modal
+    $('#groupInfoMembers').on('click', 'a', function(e) {
+        console.log(e);
+        var t = $(this);
+        var idx = t.parents('tr').index();
+        console.log('Removing group member idx', idx);
+        var g = b6.getGroup(currentChatUri);
+        if (g) {
+            var m = g.members[idx];
+            console.log('Removing group member', m);
+            b6.kickGroupMember(g, m, function(err) {
+                console.log('Member removal result err=', err);
+            });
+        }
     });
 
     // Start a voice call
-    $('#voiceCallButton').click(function() {
-        console.log('Voice call clicked');
-        startOutgoingCall(currentChatUri, false);
+    $('#audioCallButton').click(function() {
+        console.log('Audio call clicked');
+        startOutgoingCall(currentChatUri, false, false);
     });
 
     // Start a video call
     $('#videoCallButton').click(function() {
         console.log('Video call clicked');
-        startOutgoingCall(currentChatUri, true);
+        startOutgoingCall(currentChatUri, true, false);
+    });
+
+    // Start a screen sharing call
+    $('#screenCallButton').click(function() {
+        console.log('ScreenShare call clicked');
+        startOutgoingCall(currentChatUri, false, true);
     });
 
     // Start a phone call
     $('#phoneCallButton').click(function() {
         console.log('Phone call clicked');
-        // For this demo call a helpdesk of a well-known store
-        startOutgoingCall('pstn:+18004663337', false);
+        // For this demo, call a helpdesk of a well-known store
+        startPhoneCall('+18004663337');
     });
 
     // Key down event in compose input field
@@ -760,7 +891,7 @@ function initApp(b6) {
     // Send message when user hits Enter
     $('#msgText').keyup(function(e) {
         var code = e.which;
-        if (code == 13) {
+        if (code === 13) {
             e.preventDefault();
             sendMessage();
         }
@@ -787,14 +918,26 @@ function initApp(b6) {
 
 
     // 'Answer Incoming Call' click
-    $('#answer').click(function() {
+    $('#answerAudio').click(function() {
         var e = $('#incomingCall').hide();
         var d = e.data();
         // Call controller
         if (d && d.dialog) {
             var c = d.dialog;
-            // Accept the call
-            showInCallUI(c);
+            // Accept the call, send local audio only
+            updateInCallUI(c, {audio: true, video: false});
+            e.data({'dialog': null});
+        }
+    });
+
+    $('#answerVideo').click(function() {
+        var e = $('#incomingCall').hide();
+        var d = e.data();
+        // Call controller
+        if (d && d.dialog) {
+            var c = d.dialog;
+            // Accept the call, send local audio+video
+            updateInCallUI(c, {audio: true, video: true});
             e.data({'dialog': null});
         }
     });
@@ -808,6 +951,28 @@ function initApp(b6) {
             // Reject call
             d.dialog.hangup();
             e.data({'dialog': null});
+        }
+    });
+
+    $('#incallVideo').click(function() {
+        var x = b6.dialogs.slice();
+        // Adjust only the first call controller
+        if (x.length > 0) {
+            var c = x[0];
+            // Toggle video
+            var t = !c.options.video;
+            updateInCallUI(c, {video: t});
+        }
+    });
+
+    $('#incallScreen').click(function() {
+        var x = b6.dialogs.slice();
+        // Adjust only the first call controller
+        if (x.length > 0) {
+            var c = x[0];
+            // Toggle screen
+            var t = !c.options.screen;
+            updateInCallUI(c, {screen: t});
         }
     });
 

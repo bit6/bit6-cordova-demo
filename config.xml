@@ -12,4 +12,5 @@
     <content src="index.html" />
     <access origin="*" />
     <plugin name="cordova-plugin-whitelist" spec="^1.0.0" />
+    <allow-navigation href="*" />
 </widget>
