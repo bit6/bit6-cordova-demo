@@ -1,7 +1,8 @@
 
 // Initialize the application
 // b6 - an instance of Bit6 SDK
-function initApp(b6) {
+// keepLoggedIn - if true, saves auth data and resumes the login state after app restart.
+function initApp(b6, keepLoggedIn) {
 
     // Disable all audio in this demo
     var disableAudio = false;
@@ -81,6 +82,19 @@ function initApp(b6) {
         vc.attr('class', kl);
     });
 
+    var authState = keepLoggedIn ? window.localStorage.getItem('bit6_auth') : ''
+    if (authState) {
+        b6.session.resume(JSON.parse(authState), function(err) {
+            if (err) {
+                alert(JSON.stringify(err));
+                switchToLoginScreen();
+            } else {
+                loginDone();
+            }
+        });
+    } else {
+        switchToLoginScreen();
+    }
 
     // Common click handler for signup and login buttons
     function authClicked(isNewUser) {
@@ -98,6 +112,10 @@ function initApp(b6) {
                 $('#authError').html('<p>' + msg + '</p>');
             }
             else {
+                if (keepLoggedIn) {
+                    // Save auth data
+                    window.localStorage.setItem('bit6_auth', JSON.stringify(b6.session.save()));
+                }
                 console.log('auth done');
                 $('#authUsername').val('');
                 $('#authPassword').val('');
@@ -113,11 +131,18 @@ function initApp(b6) {
         var name = b6.getNameFromIdentity(b6.session.identity);
         b6.session.displayName = name;
         // Update the UI
-        $('#welcome').toggle(false);
+        $('#welcome').addClass('hidden');
+        $('#splash').addClass('hidden');
         $('#main').removeClass('hidden');
         $('#loggedInNavbar').removeClass('hidden');
         $('#loggedInUser').text( b6.session.displayName );
-        selectFirstChat();
+        // Select the first chat by simulating a click
+        // on the item in chat list only if there are no calls
+        // in progress. If we already have an ongoing call request,
+        // it will connect the call
+        if (b6.dialogs.length == 0) {
+          selectFirstChat();
+        }
         $('body').removeClass('detail');
     }
 
@@ -636,6 +661,10 @@ function initApp(b6) {
         $('#incallVideo').toggleClass('active', c.options.video);
         $('#incallScreen').toggleClass('active', c.options.screen);
 
+        if (!b6.switchCamera) {
+           $('#switchCamera').addClass('hidden');
+        }
+
         // Start/update the call
         c.connect(opts);
     }
@@ -994,16 +1023,26 @@ function initApp(b6) {
         }
     });
 
+    $('#switchCamera').click(function() {
+        b6.switchCamera();
+    });
+
+
     // Logout click
     $('#logout').click(function() {
         currentChatUri = null;
-        $('#welcome').toggle(true);
+        switchToLoginScreen();
+        b6.session.logout();
+        window.localStorage.setItem("bit6_auth", "");
+    });
+
+    function switchToLoginScreen() {
+        $('#splash').addClass('hidden');
+        $('#welcome').removeClass('hidden');
         $('#main').addClass('hidden');
         $('#loggedInNavbar').addClass('hidden');
         $('#loggedInUser').text('');
         $('#chatList').empty();
         $('#msgList').empty();
-        b6.session.logout();
-    });
-
+    }
 }

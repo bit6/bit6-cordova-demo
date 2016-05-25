@@ -54,8 +54,15 @@
 
     <div class="container fh">
 
+        <!-- Splash page -->
+        <div id="splash">
+          <div class="intro">
+            <h1>Loading...</h1>
+          </div>
+        </div><!-- /#Splash -->
+
         <!-- Welcome page -->
-        <div id="welcome">
+        <div id="welcome" class="hidden fh">
           <div class="intro">
             <h1>Welcome!</h1>
             <p class="lead">Try Bit6 awesomeness right in your browser.</p>
@@ -225,6 +232,11 @@
                 </div>
                 <div class="col-sm-5 col-xs-4">
                   <div class="pull-right">
+                   <button class="btn btn-default" id="switchCamera" data-toggle="button" autocomplete="off">
+                      <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                      <span class="visible-lg-inline">Camera</span>
+                    </button>
+
                     <button class="btn btn-default" id="incallVideo" data-toggle="button" autocomplete="off">
                       <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span>
                       <span class="visible-lg-inline">Video</span>

@@ -20,7 +20,7 @@ var app = {
         var opts = {'apikey': ''}; // TODO: insert your API key here
         var b6 = Bit6.init(opts);
         // Prepare the app
-        initApp(b6);
+        initApp(b6, true);
     }
 };
 
