@@ -1,11 +1,13 @@
 
 // Initialize the application
 // b6 - an instance of Bit6 SDK
+
 // keepLoggedIn - if true, saves auth data and resumes the login state after app restart.
 function initApp(b6, keepLoggedIn) {
-
     // Disable all audio in this demo
     var disableAudio = false;
+    // Use 'mix' media mode for new calls
+    var useMixMediaMode = false;
     // Current Chat
     var currentChatUri = null;
     // Timer to clear the 'user typing label'. Should be in SDK?
@@ -17,8 +19,30 @@ function initApp(b6, keepLoggedIn) {
     b6.on('incomingCall', function(c) {
         console.log('Incoming call', c);
         attachCallEvents(c);
-        var s = b6.getNameFromIdentity(c.other) + ' is ' + (c.options.video ? 'video ' : '') + 'calling...';
-        $('#incomingCallFrom').text(s);
+        // c.invite is populated with the information about the user
+        // who sent this call request
+        var i = c.invite;
+        // Try to get the sender name as the caller wanted it to be show.
+        // If not specified, do local lookup
+        var fromName = i.sender_name ? i.sender_name : b6.getNameFromIdentity(c.other);
+        // Do we have a group name for this call?
+        var groupName = i.group_name;
+        // Let's format the incoming call message based on the information above
+        var vid = c.options.video ? ' video' : '';
+        var from, info;
+        // Do we have a group name?
+        if (typeof groupName !== 'undefined') {
+            from = groupName.length > 0 ? groupName : 'a group';
+            from = 'Join ' + from + vid + ' call...';
+            info = 'Invited by ' + fromName;
+        }
+        // No group name
+        else {
+            from = fromName + ' is' + vid + ' calling...';
+            info = 'Do you dare to answer this call?';
+        }
+        $('#incomingCallFrom').text(from);
+        $('#incomingCallInfo').text(info);
         $('#incomingCall')
             .data({'dialog': c})
             .show();
@@ -136,6 +160,7 @@ function initApp(b6, keepLoggedIn) {
         $('#main').removeClass('hidden');
         $('#loggedInNavbar').removeClass('hidden');
         $('#loggedInUser').text( b6.session.displayName );
+
         // Select the first chat by simulating a click
         // on the item in chat list only if there are no calls
         // in progress. If we already have an ongoing call request,
@@ -598,22 +623,28 @@ function initApp(b6, keepLoggedIn) {
 
     // Start an outgoing call
     function startOutgoingCall(to, video, screen) {
+        var mediaMode = useMixMediaMode ? 'mix' : 'p2p';
         // Outgoing call params
         var opts = {
             audio: !disableAudio,
             video: video,
-            screen: screen
+            screen: screen,
+            mode: mediaMode
         };
         // Start the outgoing call
+        prepareInCallUI();
         var c = b6.startCall(to, opts);
         attachCallEvents(c);
+        c.connect();
         updateInCallUI(c);
     }
 
     // Start an outgoing phone call
     function startPhoneCall(to) {
         var c = b6.startPhoneCall(to);
+        prepareInCallUI();
         attachCallEvents(c);
+        c.connect();
         updateInCallUI(c);
     }
 
@@ -650,23 +681,20 @@ function initApp(b6, keepLoggedIn) {
         });
     }
 
-    function updateInCallUI(c, opts) {
+    function prepareInCallUI() {
         showInCallName();
-
         $('body').addClass('detail');
-
         $('#detailPane').addClass('hidden');
         $('#inCallPane').removeClass('hidden');
+    }
 
+    function updateInCallUI(c) {
+        showInCallName();
+        // Allow recording only in media mix mode
+        $('#incallRecord').toggle( c.supports('recording') );
+        $('#incallRecord').toggleClass('active', c.recording());
         $('#incallVideo').toggleClass('active', c.options.video);
         $('#incallScreen').toggleClass('active', c.options.screen);
-
-        if (!b6.switchCamera) {
-           $('#switchCamera').addClass('hidden');
-        }
-
-        // Start/update the call
-        c.connect(opts);
     }
 
     // Show all the call participants
@@ -713,7 +741,6 @@ function initApp(b6, keepLoggedIn) {
             tbody.append(tr);
         }
     }
-
 
     console.log('Bit6 Demo Ready!');
 
@@ -892,6 +919,12 @@ function initApp(b6, keepLoggedIn) {
         }
     });
 
+    // Change Media Mode for new calls
+    $('#mediaModeButton').click(function() {
+        useMixMediaMode = !useMixMediaMode;
+        $(this).text(useMixMediaMode ? 'Media mode: Mix' : 'Media mode: P2P');
+    });
+
     // Start a voice call
     $('#audioCallButton').click(function() {
         console.log('Audio call clicked');
@@ -899,9 +932,18 @@ function initApp(b6, keepLoggedIn) {
     });
 
     // Start a video call
-    $('#videoCallButton').click(function() {
-        console.log('Video call clicked');
-        startOutgoingCall(currentChatUri, true, false);
+    $('#videoCallDefault').click(function() {
+       startOutgoingCall(currentChatUri, true, false);
+    });
+
+    $('#videoCallFrontCam').click(function() {
+       var videoOpt = {facingMode: 'user'};
+       startOutgoingCall(currentChatUri, videoOpt, false);
+    });
+
+    $('#videoCallBackCam').click(function() {
+       var videoOpt = {facingMode: 'environment'};
+       startOutgoingCall(currentChatUri, videoOpt, false);
     });
 
     // Start a screen sharing call
@@ -960,7 +1002,9 @@ function initApp(b6, keepLoggedIn) {
         if (d && d.dialog) {
             var c = d.dialog;
             // Accept the call, send local audio only
-            updateInCallUI(c, {audio: true, video: false});
+            prepareInCallUI();
+            c.connect({audio: true, video: false});
+            updateInCallUI(c);
             e.data({'dialog': null});
         }
     });
@@ -972,7 +1016,9 @@ function initApp(b6, keepLoggedIn) {
         if (d && d.dialog) {
             var c = d.dialog;
             // Accept the call, send local audio+video
-            updateInCallUI(c, {audio: true, video: true});
+            prepareInCallUI();
+            c.connect({audio: true, video: true});
+            updateInCallUI(c);
             e.data({'dialog': null});
         }
     });
@@ -989,6 +1035,17 @@ function initApp(b6, keepLoggedIn) {
         }
     });
 
+    $('#incallRecord').click(function() {
+        var x = b6.dialogs.slice();
+        // Adjust only the first call controller
+        if (x.length > 0) {
+            var c = x[0];
+            // Toggle recording
+            c.recording( !c.recording() );
+        }
+    });
+
+
     $('#incallVideo').click(function() {
         var x = b6.dialogs.slice();
         // Adjust only the first call controller
@@ -996,7 +1053,8 @@ function initApp(b6, keepLoggedIn) {
             var c = x[0];
             // Toggle video
             var t = !c.options.video;
-            updateInCallUI(c, {video: t});
+            c.connect({video: t});
+            updateInCallUI(c);
         }
     });
 
@@ -1007,7 +1065,8 @@ function initApp(b6, keepLoggedIn) {
             var c = x[0];
             // Toggle screen
             var t = !c.options.screen;
-            updateInCallUI(c, {screen: t});
+            c.connect({screen: t});
+            updateInCallUI(c);
         }
     });
 
@@ -1023,11 +1082,6 @@ function initApp(b6, keepLoggedIn) {
         }
     });
 
-    $('#switchCamera').click(function() {
-        b6.switchCamera();
-    });
-
-
     // Logout click
     $('#logout').click(function() {
         currentChatUri = null;
@@ -1039,6 +1093,7 @@ function initApp(b6, keepLoggedIn) {
     function switchToLoginScreen() {
         $('#splash').addClass('hidden');
         $('#welcome').removeClass('hidden');
+        $('#welcome').toggle(true);
         $('#main').addClass('hidden');
         $('#loggedInNavbar').addClass('hidden');
         $('#loggedInUser').text('');

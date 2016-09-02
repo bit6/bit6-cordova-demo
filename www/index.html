@@ -14,7 +14,7 @@
       }
     </script>
 
-    <title>Bit6 Demo 0.9.7</title>
+    <title>Bit6 Demo 0.9.9</title>
 
     <!-- Bootstrap core CSS -->
     <link href="bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -53,7 +53,6 @@
     </div>
 
     <div class="container fh">
-
         <!-- Splash page -->
         <div id="splash">
           <div class="intro">
@@ -95,7 +94,7 @@
           <!-- Incoming Call alert -->
           <div class="alert alert-warning fade in" id="incomingCall">
             <h4 id="incomingCallFrom">John is calling...</h4>
-            <p>Do you dare to answer this call?</p>
+            <p id="incomingCallInfo">Do you dare to answer this call?</p>
             <p>
               <button type="button" class="btn btn-success" id="answerVideo">Video</button>
               <button type="button" class="btn btn-success" id="answerAudio">Audio</button>
@@ -169,22 +168,37 @@
                 </div>
                 <div class="col-sm-7 col-xs-7">
                   <div id="chatButtons" class="pull-right">
+
+                    <!-- Audio Call -->
                     <button class="btn btn-info" id="audioCallButton">
                       <span class="glyphicon glyphicon-earphone" aria-hidden="true"></span>
                       <span class="hidden-sm hidden-xs">Audio</span>
                     </button>
-                    <button class="btn btn-info" id="videoCallButton">
-                      <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span>
-                      <span class="hidden-sm hidden-xs">Video</span>
-                    </button>
-                    <button class="btn btn-info hidden-xs" id="screenCallButton">
-                      <span class="glyphicon glyphicon-share" aria-hidden="true"></span>
-                      <span class="hidden-sm hidden-xs">Screen</span>
-                    </button>
+                     <!-- Video Call Options -->
+                     <div class="btn-group" >
+
+                      <button type="button" class="btn btn-info" id="videoCallDefault" >
+                        <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span>
+                        <span class="hidden-sm hidden-xs">Video</span>
+                      </button>
+
+                      <button class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="caret"></span>
+                        <span class="sr-only"></span>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-right">
+                        <li><a href="#" id="videoCallFrontCam">Front Camera</a></li>
+                        <li><a href="#" id="videoCallBackCam">Back Camera</a></li>
+                      </ul>
+                    </div>
+                    <!-- Conversation options -->
                     <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                       <span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>
                     </button>
-                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+
+                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu1">
+                      <li><a href="#" id="mediaModeButton">Media mode: P2P</a></li>
+                      <li><a href="#" id="screenCallButton">Share screen</a></li>
                       <li><a href="#" id="groupInfoButton">Group details</a></li>
                       <li role="separator" class="divider"></li>
                       <li><a href="#" id="deleteChatButton">Delete messages</a></li>
@@ -225,25 +239,21 @@
 
             <!-- col3 -->
             <div class="col-sm-8 fh hidden" id="inCallPane">
-
               <div class="row top-row">
-                <div class="col-sm-7 col-xs-8">
+                <div class="col-sm-7 col-xs-7">
                   <h3 id="inCallOther">Video Call</h3>
                 </div>
-                <div class="col-sm-5 col-xs-4">
+                <div class="col-sm-5 col-xs-5">
                   <div class="pull-right">
-                   <button class="btn btn-default" id="switchCamera" data-toggle="button" autocomplete="off">
-                      <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
-                      <span class="visible-lg-inline">Camera</span>
+                    <button class="btn btn-default" id="incallRecord" data-toggle="button" autocomplete="off">
+                      <span class="glyphicon glyphicon-record" aria-hidden="true"></span>
+                      <span class="visible-lg-inline">Record</span>
                     </button>
-
                     <button class="btn btn-default" id="incallVideo" data-toggle="button" autocomplete="off">
                       <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span>
-                      <span class="visible-lg-inline">Video</span>
                     </button>
                     <button class="btn btn-default hidden-xs" id="incallScreen" data-toggle="button" autocomplete="off">
                       <span class="glyphicon glyphicon-share" aria-hidden="true"></span>
-                      <span class="visible-lg-inline">Screen</span>
                     </button>
                     <button class="btn btn-danger" id="hangup">
                       <span class="glyphicon glyphicon-earphone" aria-hidden="true"></span>
@@ -336,13 +346,13 @@
       </div>
     </div>
 
-
     <!-- Bootstrap core JavaScript -->
     <script src="jquery/dist/jquery.min.js"></script>
     <script src="bootstrap/dist/js/bootstrap.min.js"></script>
     <!-- Include Cordova js file for Cordova app -->
     <script src="cordova.js"></script>
     <!-- app js code -->
+    <script src="js/adapter.js"></script>
     <script src="js/demo.js"></script>
     <script src="js/index.js"></script>
   </body>
