@@ -242,6 +242,7 @@ a.thumb img {
   border-bottom: 1px solid #fff;
   width: auto;
   height: auto;
+  z-index: 10;
 }
 
 #videoContainer.grid > video {

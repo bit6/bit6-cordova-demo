@@ -23,17 +23,20 @@ $ git clone git://github.com/bit6/bit6-cordova-demo.git
   ```sh
   $ cordova plugin add https://github.com/bit6/bit6-cordova
   ```
+4. For voice/video call support add iosrtc for iOS and Crosswalk Webview plugin for Android < 5. See [this section](https://github.com/bit6/bit6-cordova#videovoice-calls-on-ios)
 
-4. Add the platforms you want to support
+5. Add the platforms you want to support
   ```sh
   $ cordova platform add ios
   $ cordova platform add android
   $ cordova platform add browser
   ```
 
-5. [Configure](https://github.com/bit6/bit6-cordova#push-notifications) push notification support.
+6. Set [iOS signing configuration](https://cordova.apache.org/docs/en/latest/guide/platforms/ios/index.html#signing-an-app)
 
-6. Fix WebView overlap on iOS (optional)
+7. [Configure](https://github.com/bit6/bit6-cordova#push-notifications) push notification support.
+
+8. Fix WebView overlap on iOS (optional)
   ```sh
   # Add StatusBar plugin
   $ cordova plugin add https://github.com/apache/cordova-plugin-statusbar
